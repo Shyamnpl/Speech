@@ -1,22 +1,20 @@
 <?php
-// Enable error reporting for debugging on Vercel
+// Enable error reporting for debugging
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
-// config.php is in the same directory, so this path is correct
-require_once __DIR__ . '/config.php';
-
-// Get API key from Vercel Environment Variables
+// Get API key directly from Vercel Environment Variables.
+// The config.php file is no longer needed.
 $apiKey = getenv('ELEVENLABS_API_KEY');
 
 if (!$apiKey) {
     http_response_code(500);
     header('Content-Type: application/json');
-    echo json_encode(['detail' => ['message' => 'Server Error: API key is not configured in Vercel.']]);
+    echo json_encode(['detail' => ['message' => 'Server Error: ELEVENLABS_API_KEY is not configured in Vercel Environment Variables.']]);
     exit;
 }
 
-// Get POST data
+// Get POST data from the frontend
 $requestBody = file_get_contents('php://input');
 $requestData = json_decode($requestBody, true);
 $textToSpeak = $requestData['text'] ?? '';
