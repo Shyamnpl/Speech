@@ -111,7 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
         clearVisualizer();
 
         try {
-            const response = await fetch('api.php', {
+            const response = await fetch('/api/api.php', { // <-- IMPORTANT CHANGE
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ text: textToSpeak, voice: voiceSelect.value }),
