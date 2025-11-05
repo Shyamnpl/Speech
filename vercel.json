@@ -4,5 +4,8 @@
       "runtime": "@vercel/php",
       "runtimeVersion": "8.4"
     }
-  }
+  },
+  "routes": [
+    { "src": "/(.*)", "dest": "/api/$1" }
+  ]
 }
