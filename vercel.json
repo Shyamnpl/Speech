@@ -1,8 +1,8 @@
 {
   "functions": {
     "api/**/*.php": {
-      "runtime": "@omnistac/vercel-php@2.1.0",
-      "php": "8.4"
+      "runtime": "@vercel/php",
+      "runtimeVersion": "8.4"
     }
   }
 }
