@@ -7,97 +7,54 @@ document.addEventListener('DOMContentLoaded', () => {
     const status = document.getElementById('status');
     const voiceSelect = document.getElementById('voice-select');
     const visualizerCanvas = document.getElementById('visualizer');
-    const audioOutputContainer = document.getElementById('audio-output'); // Changed variable name
+    const audioOutputContainer = document.getElementById('audio-output');
 
-    // Web Speech API for HINDI
+    // Web Speech API for HINDI output
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     let recognition;
     if (SpeechRecognition) {
         recognition = new SpeechRecognition();
         recognition.continuous = true;
         recognition.interimResults = true;
-        recognition.lang = 'hi-IN'; // <<--- LANGUAGE CHANGED TO HINDI
+        recognition.lang = 'hi-IN'; // <-- Set to Hindi for direct Hindi speech recognition
     } else {
-        updateStatus("क्षमा करें, आपका ब्राउज़र स्पीच रिकग्निशन का समर्थन नहीं करता है।", true);
+        updateStatus("Sorry, your browser doesn't support speech recognition.", true);
         listenBtn.disabled = true;
     }
 
     let isListening = false;
     let finalTranscript = '';
 
-    // Audio Visualizer
+    // Audio Visualizer (No changes here, it remains the same)
     let audioContext, analyser, source, dataArray, animationFrameId;
     const canvasCtx = visualizerCanvas.getContext('2d');
-
-    const setupVisualizer = (audioElement) => {
-        if (!audioContext) {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            analyser = audioContext.createAnalyser();
-            analyser.fftSize = 256;
-        }
-        if (source) {
-            source.disconnect();
-        }
-        source = audioContext.createMediaElementSource(audioElement);
-        source.connect(analyser);
-        analyser.connect(audioContext.destination);
-
-        const bufferLength = analyser.frequencyBinCount;
-        dataArray = new Uint8Array(bufferLength);
-        drawVisualizer();
-    };
-
-    const drawVisualizer = () => {
-        animationFrameId = requestAnimationFrame(drawVisualizer);
-        analyser.getByteFrequencyData(dataArray);
-
-        canvasCtx.fillStyle = '#121212';
-        canvasCtx.fillRect(0, 0, visualizerCanvas.width, visualizerCanvas.height);
-
-        const barWidth = (visualizerCanvas.width / dataArray.length) * 1.5;
-        let barHeight;
-        let x = 0;
-
-        for (let i = 0; i < dataArray.length; i++) {
-            barHeight = dataArray[i] / 2;
-            const gradient = canvasCtx.createLinearGradient(0, 0, 0, visualizerCanvas.height);
-            gradient.addColorStop(0, '#00aaff');
-            gradient.addColorStop(1, '#0055ff');
-            canvasCtx.fillStyle = gradient;
-            canvasCtx.fillRect(x, visualizerCanvas.height - barHeight, barWidth, barHeight);
-            x += barWidth + 1;
-        }
-    };
-
-    const clearVisualizer = () => {
-        if (animationFrameId) {
-            cancelAnimationFrame(animationFrameId);
-        }
-        canvasCtx.clearRect(0, 0, visualizerCanvas.width, visualizerCanvas.height);
-    };
+    const setupVisualizer = (audioElement) => { if (!audioContext) { audioContext = new (window.AudioContext || window.webkitAudioContext)(); analyser = audioContext.createAnalyser(); analyser.fftSize = 256; } if (source) { source.disconnect(); } source = audioContext.createMediaElementSource(audioElement); source.connect(analyser); analyser.connect(audioContext.destination); const bufferLength = analyser.frequencyBinCount; dataArray = new Uint8Array(bufferLength); drawVisualizer(); };
+    const drawVisualizer = () => { animationFrameId = requestAnimationFrame(drawVisualizer); analyser.getByteFrequencyData(dataArray); canvasCtx.fillStyle = '#121212'; canvasCtx.fillRect(0, 0, visualizerCanvas.width, visualizerCanvas.height); const barWidth = (visualizerCanvas.width / dataArray.length) * 1.5; let barHeight; let x = 0; for (let i = 0; i < dataArray.length; i++) { barHeight = dataArray[i] / 2; const gradient = canvasCtx.createLinearGradient(0, 0, 0, visualizerCanvas.height); gradient.addColorStop(0, '#00aaff'); gradient.addColorStop(1, '#0055ff'); canvasCtx.fillStyle = gradient; canvasCtx.fillRect(x, visualizerCanvas.height - barHeight, barWidth, barHeight); x += barWidth + 1; } };
+    const clearVisualizer = () => { if (animationFrameId) { cancelAnimationFrame(animationFrameId); } canvasCtx.clearRect(0, 0, visualizerCanvas.width, visualizerCanvas.height); };
     
+    // Status updates are now in English
     const updateStatus = (message, isError = false) => {
-        status.textContent = `स्थिति: ${message}`;
+        status.textContent = `Status: ${message}`;
         status.style.color = isError ? '#ff6b6b' : 'var(--text-muted-color)';
     };
 
     if (recognition) {
         recognition.onstart = () => {
             isListening = true;
-            listenBtn.querySelector('span').textContent = 'बंद करो';
+            listenBtn.querySelector('span').textContent = 'Stop';
             listenBtn.classList.add('listening');
-            updateStatus('सुन रहा हूँ...');
+            updateStatus('Listening...');
         };
 
         recognition.onend = () => {
             isListening = false;
-            listenBtn.querySelector('span').textContent = 'सुनो';
+            listenBtn.querySelector('span').textContent = 'Speak';
             listenBtn.classList.remove('listening');
-            updateStatus('निष्क्रिय');
+            updateStatus('Idle');
         };
 
         recognition.onerror = (event) => {
-            updateStatus(`त्रुटि: ${event.error}`, true);
+            updateStatus(`Error: ${event.error}`, true);
         };
 
         recognition.onresult = (event) => {
@@ -135,22 +92,22 @@ document.addEventListener('DOMContentLoaded', () => {
     copyBtn.addEventListener('click', () => {
         if (outputText.value) {
             navigator.clipboard.writeText(outputText.value)
-                .then(() => updateStatus('टेक्स्ट क्लिपबोर्ड पर कॉपी हो गया!'))
-                .catch(() => updateStatus('टेक्स्ट कॉपी करने में विफल।', true));
+                .then(() => updateStatus('Text copied to clipboard!'))
+                .catch(() => updateStatus('Failed to copy text.', true));
         }
     });
 
     generateBtn.addEventListener('click', async () => {
         const textToSpeak = outputText.value;
         if (!textToSpeak.trim()) {
-            updateStatus('खाली टेक्स्ट से आवाज उत्पन्न नहीं की जा सकती।', true);
+            updateStatus('Cannot generate speech from empty text.', true);
             return;
         }
 
-        generateBtn.disabled = true;
-        generateBtn.querySelector('span').textContent = 'बना रहा है...';
-        updateStatus('API से ऑडियो का अनुरोध किया जा रहा है...');
-        audioOutputContainer.innerHTML = ''; // Clear previous player and button
+        generateBtn.disabled = false;
+        generateBtn.querySelector('span').textContent = 'Generating...';
+        updateStatus('Requesting audio from API...');
+        audioOutputContainer.innerHTML = '';
         clearVisualizer();
 
         try {
@@ -160,51 +117,48 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({ text: textToSpeak, voice: voiceSelect.value }),
             });
 
-            // *** ERROR HANDLING FIX ***
             if (!response.ok) {
                 let errorMessage;
                 const contentType = response.headers.get("content-type");
                 if (contentType && contentType.indexOf("application/json") !== -1) {
                     const errorData = await response.json();
-                    errorMessage = errorData.detail.message || JSON.stringify(errorData);
+                    errorMessage = errorData.detail?.message || JSON.stringify(errorData);
                 } else {
                     errorMessage = await response.text();
                 }
                 throw new Error(errorMessage);
             }
 
-            updateStatus('ऑडियो स्ट्रीम हो रहा है...');
+            updateStatus('Streaming audio...');
             const audioBlob = await response.blob();
             const audioUrl = URL.createObjectURL(audioBlob);
             
-            // Create Audio Player
             const audio = new Audio(audioUrl);
             audio.controls = true;
             audioOutputContainer.appendChild(audio);
 
-            // *** CREATE DOWNLOAD BUTTON ***
             const downloadLink = document.createElement('a');
             downloadLink.href = audioUrl;
             downloadLink.download = 'generated_speech.mp3';
             downloadLink.className = 'download-btn';
-            downloadLink.innerHTML = `<i class="fas fa-download"></i> डाउनलोड`;
+            downloadLink.innerHTML = `<i class="fas fa-download"></i> Download`;
             audioOutputContainer.appendChild(downloadLink);
 
             audio.play();
             setupVisualizer(audio);
 
-            audio.onplay = () => updateStatus('ऑडियो चल रहा है...');
+            audio.onplay = () => updateStatus('Playing audio...');
             audio.onended = () => {
-                updateStatus('ऑडियो समाप्त।');
+                updateStatus('Audio finished.');
                 clearVisualizer();
             };
 
         } catch (error) {
-            console.error('आवाज उत्पन्न करने में त्रुटि:', error);
-            updateStatus(`त्रुटि: ${error.message}`, true);
+            console.error('Error generating speech:', error);
+            updateStatus(`Error: ${error.message}`, true);
         } finally {
             generateBtn.disabled = false;
-            generateBtn.querySelector('span').textContent = 'उत्पन्न करें';
+            generateBtn.querySelector('span').textContent = 'Generate';
         }
     });
 });
