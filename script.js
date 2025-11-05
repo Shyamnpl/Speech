@@ -7,18 +7,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const status = document.getElementById('status');
     const voiceSelect = document.getElementById('voice-select');
     const visualizerCanvas = document.getElementById('visualizer');
-    const audioPlayerContainer = document.getElementById('audio-player-container');
+    const audioOutputContainer = document.getElementById('audio-output'); // Changed variable name
 
-    // Web Speech API
+    // Web Speech API for HINDI
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     let recognition;
     if (SpeechRecognition) {
         recognition = new SpeechRecognition();
         recognition.continuous = true;
         recognition.interimResults = true;
-        recognition.lang = 'en-US';
+        recognition.lang = 'hi-IN'; // <<--- LANGUAGE CHANGED TO HINDI
     } else {
-        updateStatus("Speech recognition is not supported by your browser.", true);
+        updateStatus("क्षमा करें, आपका ब्राउज़र स्पीच रिकग्निशन का समर्थन नहीं करता है।", true);
         listenBtn.disabled = true;
     }
 
@@ -35,7 +35,9 @@ document.addEventListener('DOMContentLoaded', () => {
             analyser = audioContext.createAnalyser();
             analyser.fftSize = 256;
         }
-
+        if (source) {
+            source.disconnect();
+        }
         source = audioContext.createMediaElementSource(audioElement);
         source.connect(analyser);
         analyser.connect(audioContext.destination);
@@ -68,39 +70,39 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const clearVisualizer = () => {
-        cancelAnimationFrame(animationFrameId);
+        if (animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
+        }
         canvasCtx.clearRect(0, 0, visualizerCanvas.width, visualizerCanvas.height);
     };
     
-    // Update Status Function
     const updateStatus = (message, isError = false) => {
-        status.textContent = `Status: ${message}`;
+        status.textContent = `स्थिति: ${message}`;
         status.style.color = isError ? '#ff6b6b' : 'var(--text-muted-color)';
     };
 
-    // Speech Recognition Handlers
     if (recognition) {
         recognition.onstart = () => {
             isListening = true;
-            listenBtn.querySelector('span').textContent = 'Stop';
+            listenBtn.querySelector('span').textContent = 'बंद करो';
             listenBtn.classList.add('listening');
-            updateStatus('Listening...');
+            updateStatus('सुन रहा हूँ...');
         };
 
         recognition.onend = () => {
             isListening = false;
-            listenBtn.querySelector('span').textContent = 'Listen';
+            listenBtn.querySelector('span').textContent = 'सुनो';
             listenBtn.classList.remove('listening');
-            updateStatus('Idle');
+            updateStatus('निष्क्रिय');
         };
 
         recognition.onerror = (event) => {
-            updateStatus(`Error: ${event.error}`, true);
+            updateStatus(`त्रुटि: ${event.error}`, true);
         };
 
         recognition.onresult = (event) => {
             let interimTranscript = '';
-            finalTranscript = ''; // Reset final transcript
+            finalTranscript = '';
             for (let i = event.resultIndex; i < event.results.length; ++i) {
                 if (event.results[i].isFinal) {
                     finalTranscript += event.results[i][0].transcript;
@@ -120,12 +122,11 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    // Event Listeners
     listenBtn.addEventListener('click', () => {
         if (isListening) {
             recognition.stop();
         } else {
-            finalTranscript = ''; // Clear transcript on new start
+            finalTranscript = '';
             outputText.value = '';
             recognition.start();
         }
@@ -134,21 +135,23 @@ document.addEventListener('DOMContentLoaded', () => {
     copyBtn.addEventListener('click', () => {
         if (outputText.value) {
             navigator.clipboard.writeText(outputText.value)
-                .then(() => updateStatus('Text copied to clipboard!'))
-                .catch(() => updateStatus('Failed to copy text.', true));
+                .then(() => updateStatus('टेक्स्ट क्लिपबोर्ड पर कॉपी हो गया!'))
+                .catch(() => updateStatus('टेक्स्ट कॉपी करने में विफल।', true));
         }
     });
 
     generateBtn.addEventListener('click', async () => {
         const textToSpeak = outputText.value;
         if (!textToSpeak.trim()) {
-            updateStatus('Cannot generate speech from empty text.', true);
+            updateStatus('खाली टेक्स्ट से आवाज उत्पन्न नहीं की जा सकती।', true);
             return;
         }
 
         generateBtn.disabled = true;
-        generateBtn.querySelector('span').textContent = 'Generating...';
-        updateStatus('Requesting audio from API...');
+        generateBtn.querySelector('span').textContent = 'बना रहा है...';
+        updateStatus('API से ऑडियो का अनुरोध किया जा रहा है...');
+        audioOutputContainer.innerHTML = ''; // Clear previous player and button
+        clearVisualizer();
 
         try {
             const response = await fetch('api.php', {
@@ -157,35 +160,51 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({ text: textToSpeak, voice: voiceSelect.value }),
             });
 
+            // *** ERROR HANDLING FIX ***
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || `Server error: ${response.status}`);
+                let errorMessage;
+                const contentType = response.headers.get("content-type");
+                if (contentType && contentType.indexOf("application/json") !== -1) {
+                    const errorData = await response.json();
+                    errorMessage = errorData.detail.message || JSON.stringify(errorData);
+                } else {
+                    errorMessage = await response.text();
+                }
+                throw new Error(errorMessage);
             }
 
-            updateStatus('Streaming audio...');
+            updateStatus('ऑडियो स्ट्रीम हो रहा है...');
             const audioBlob = await response.blob();
             const audioUrl = URL.createObjectURL(audioBlob);
             
-            audioPlayerContainer.innerHTML = ''; // Clear previous player
+            // Create Audio Player
             const audio = new Audio(audioUrl);
             audio.controls = true;
-            audioPlayerContainer.appendChild(audio);
+            audioOutputContainer.appendChild(audio);
+
+            // *** CREATE DOWNLOAD BUTTON ***
+            const downloadLink = document.createElement('a');
+            downloadLink.href = audioUrl;
+            downloadLink.download = 'generated_speech.mp3';
+            downloadLink.className = 'download-btn';
+            downloadLink.innerHTML = `<i class="fas fa-download"></i> डाउनलोड`;
+            audioOutputContainer.appendChild(downloadLink);
 
             audio.play();
             setupVisualizer(audio);
 
-            audio.onplay = () => updateStatus('Playing audio...');
+            audio.onplay = () => updateStatus('ऑडियो चल रहा है...');
             audio.onended = () => {
-                updateStatus('Audio finished.');
+                updateStatus('ऑडियो समाप्त।');
                 clearVisualizer();
             };
 
         } catch (error) {
-            console.error('Error generating speech:', error);
-            updateStatus(`Error: ${error.message}`, true);
+            console.error('आवाज उत्पन्न करने में त्रुटि:', error);
+            updateStatus(`त्रुटि: ${error.message}`, true);
         } finally {
             generateBtn.disabled = false;
-            generateBtn.querySelector('span').textContent = 'Generate';
+            generateBtn.querySelector('span').textContent = 'उत्पन्न करें';
         }
     });
 });

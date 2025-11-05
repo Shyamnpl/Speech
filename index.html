@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Voice AI | Speech-to-Text & TTS</title>
+    <title>Voice AI | हिंदी स्पीच-टू-टेक्स्ट और TTS</title>
     <link rel="stylesheet" href="style.css">
     <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
@@ -11,42 +11,43 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>Voice AI</h1>
-            <p>Real-Time Speech-to-Text & Text-to-Speech</p>
+            <h1>Voice AI (हिंदी)</h1>
+            <p>speak your hindi text will appear here</p>
         </div>
 
         <div class="main-content">
-            <textarea id="outputText" placeholder="Speak, and your words will appear here..."></textarea>
+            <textarea id="outputText" placeholder="बोलना शुरू करें..."></textarea>
             <div id="visualizer-container">
                 <canvas id="visualizer"></canvas>
             </div>
-            <div id="audio-player-container"></div>
+            <!-- Container for Audio Player and Download Button -->
+            <div id="audio-output"></div>
         </div>
 
         <div class="controls">
             <div class="voice-selector-wrapper">
-                <label for="voice-select">Choose a Voice:</label>
+                <label for="voice-select">Select Voice:</label>
                 <select id="voice-select">
                     <option value="pNInz6obpgDQGcFmaJgB" selected>Adam (Default)</option>
-                    <!-- Add more voice options here in the future -->
+                    <!-- Add more voice options here -->
                 </select>
             </div>
             
-            <button id="listenBtn" title="Start/Stop Listening">
+            <button id="listenBtn" title="सुनना शुरू करें/बंद करें">
                 <i class="fas fa-microphone"></i>
-                <span>Listen</span>
+                <span>Speak</span>
             </button>
-            <button id="generateBtn" title="Generate Speech" disabled>
+            <button id="generateBtn" title="आवाज उत्पन्न करें" disabled>
                 <i class="fas fa-play-circle"></i>
                 <span>Generate</span>
             </button>
-            <button id="copyBtn" title="Copy Text" disabled>
+            <button id="copyBtn" title="टेक्स्ट कॉपी करें" disabled>
                 <i class="fas fa-copy"></i>
                 <span>Copy</span>
             </button>
         </div>
         
-        <p id="status">Status: Idle</p>
+        <p id="status">Status: online</p>
     </div>
 
     <script src="script.js"></script>

@@ -2,6 +2,7 @@
 
 :root {
     --primary-color: #00aaff;
+    --secondary-color: #00e676;
     --background-color: #121212;
     --surface-color: rgba(30, 30, 30, 0.7);
     --text-color: #e0e0e0;
@@ -59,7 +60,7 @@ body {
     border: 1px solid var(--border-color);
     border-radius: 12px;
     padding: 15px;
-    font-size: 1rem;
+    font-size: 1.1rem; /* Slightly larger font for Hindi */
     color: var(--text-color);
     resize: vertical;
     transition: border-color 0.3s, box-shadow 0.3s;
@@ -84,14 +85,40 @@ body {
     height: 100%;
 }
 
-#audio-player-container {
-    margin-top: 10px;
-    height: 40px;
+/* Styles for Audio Player and Download Button */
+#audio-output {
+    margin-top: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    min-height: 40px;
 }
 
 audio {
-    width: 100%;
+    flex-grow: 1;
+    max-width: 400px;
     filter: invert(1) sepia(1) saturate(5) hue-rotate(180deg);
+}
+
+.download-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background-color: var(--secondary-color);
+    color: #121212;
+    border: none;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.download-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 20px rgba(0, 230, 118, 0.4);
 }
 
 .controls {
