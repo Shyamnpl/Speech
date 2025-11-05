@@ -1,7 +1,7 @@
 {
   "functions": {
     "api/**/*.php": {
-      "runtime": "@vercel-community/php@1.0.1"
+      "runtime": "@omnistac/vercel-php@latest"
     }
   }
 }
